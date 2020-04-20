@@ -13,20 +13,22 @@ A `Temporal.MonthDay` can be converted into a `Temporal.Date` by combining it wi
 
 ## Constructor
 
-### **new Temporal.MonthDay**(_isoMonth_: number, _isoDay_: number) : Temporal.MonthDay
+### **new Temporal.MonthDay**(_isoMonth_: number, _isoDay_: number, _refIsoYear_: number = 1972) : Temporal.MonthDay
 
 **Parameters:**
 - `isoMonth` (number): A month, ranging between 1 and 12 inclusive.
 - `isoDay` (number): A day of the month, ranging between 1 and 31 inclusive.
+- `refIsoYear` (optional number): A reference year, used for disambiguation when implementing other calendar systems.
+  This parameter can usually be omitted.
 
 **Returns:** a new `Temporal.MonthDay` object.
 
-Use this constructor if you have the correct parameters for the date already as individual number values.
+Use this constructor if you have the correct parameters for the date already as individual number values, or you are implementing a custom calendar.
 Otherwise, `Temporal.MonthDay.from()`, which accepts more kinds of input and allows disambiguation behaviour, is probably more convenient.
 
 All values are given as reckoned in the [ISO 8601 calendar](https://en.wikipedia.org/wiki/ISO_8601#Dates).
-Together, `isoMonth` and `isoDay` must represent a valid date in at least one year of that calendar.
-For example, February 29 (Leap day in the ISO 8601 calendar) is a valid value for `Temporal.MonthDay`, even though that date does not occur every year.
+Together, `refIsoYear`, `isoMonth` and `isoDay` must represent a valid date in that calendar.
+For example, February 29 (Leap day in the ISO 8601 calendar) is a valid value for `Temporal.MonthDay`, even though that date does not occur every year, because the default value of `refIsoYear` is 1972 which is a leap year.
 
 > **NOTE**: The `isoMonth` argument ranges from 1 to 12, which is different from legacy `Date` where months are represented by zero-based indices (0 to 11).
 

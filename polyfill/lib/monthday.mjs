@@ -1,17 +1,18 @@
 import { ES } from './ecmascript.mjs';
 import { GetIntrinsic, MakeIntrinsicClass } from './intrinsicclass.mjs';
-import { ISO_MONTH, ISO_DAY, CreateSlots, GetSlot, SetSlot } from './slots.mjs';
+import { ISO_MONTH, ISO_DAY, REF_ISO_YEAR, CreateSlots, GetSlot, SetSlot } from './slots.mjs';
 
 export class MonthDay {
-  constructor(isoMonth, isoDay) {
+  constructor(isoMonth, isoDay, refIsoYear = 1972) {
     isoMonth = ES.ToInteger(isoMonth);
     isoDay = ES.ToInteger(isoDay);
-    const leapYear = 1972; // XXX #261 leap year
-    ES.RejectDate(leapYear, isoMonth, isoDay);
+    refIsoYear = ES.ToInteger(refIsoYear);
+    ES.RejectDate(refIsoYear, isoMonth, isoDay);
 
     CreateSlots(this);
     SetSlot(this, ISO_MONTH, isoMonth);
     SetSlot(this, ISO_DAY, isoDay);
+    SetSlot(this, REF_ISO_YEAR, refIsoYear);
   }
 
   get month() {
@@ -85,20 +86,23 @@ export class MonthDay {
   }
   static from(item, options = undefined) {
     const disambiguation = ES.ToTemporalDisambiguation(options);
-    let month, day;
+    let month, day, refIsoYear;
     if (typeof item === 'object' && item) {
       if (ES.IsTemporalMonthDay(item)) {
         month = GetSlot(item, ISO_MONTH);
         day = GetSlot(item, ISO_DAY);
+        refIsoYear = GetSlot(item, REF_ISO_YEAR);
       } else {
         // Intentionally alphabetical
         ({ month, day } = ES.ToRecord(item, [['day'], ['month']]));
+        refIsoYear = 1972;
       }
     } else {
       ({ month, day } = ES.ParseTemporalMonthDayString(ES.ToString(item)));
+      refIsoYear = 1972;
     }
     ({ month, day } = ES.RegulateMonthDay(month, day, disambiguation));
-    const result = new this(month, day);
+    const result = new this(month, day, refIsoYear);
     if (!ES.IsTemporalMonthDay(result)) throw new TypeError('invalid result');
     return result;
   }

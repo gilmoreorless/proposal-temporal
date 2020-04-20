@@ -1,15 +1,17 @@
 import { ES } from './ecmascript.mjs';
 import { GetIntrinsic, MakeIntrinsicClass } from './intrinsicclass.mjs';
-import { ISO_YEAR, ISO_MONTH, CreateSlots, GetSlot, SetSlot } from './slots.mjs';
+import { ISO_YEAR, ISO_MONTH, REF_ISO_DAY, CreateSlots, GetSlot, SetSlot } from './slots.mjs';
 
 export class YearMonth {
-  constructor(isoYear, isoMonth) {
+  constructor(isoYear, isoMonth, refIsoDay = 1) {
     isoYear = ES.ToInteger(isoYear);
     isoMonth = ES.ToInteger(isoMonth);
-    ES.RejectYearMonth(isoYear, isoMonth);
+    refIsoDay = ES.ToInteger(refIsoDay);
+    ES.RejectYearMonth(isoYear, isoMonth, refIsoDay);
     CreateSlots(this);
     SetSlot(this, ISO_YEAR, isoYear);
     SetSlot(this, ISO_MONTH, isoMonth);
+    SetSlot(this, REF_ISO_DAY, refIsoDay);
   }
   get year() {
     if (!ES.IsTemporalYearMonth(this)) throw new TypeError('invalid receiver');
@@ -154,20 +156,23 @@ export class YearMonth {
   }
   static from(item, options = undefined) {
     const disambiguation = ES.ToTemporalDisambiguation(options);
-    let year, month;
+    let year, month, refIsoDay;
     if (typeof item === 'object' && item) {
       if (ES.IsTemporalYearMonth(item)) {
         year = GetSlot(item, ISO_YEAR);
         month = GetSlot(item, ISO_MONTH);
+        refIsoDay = GetSlot(item, REF_ISO_DAY);
       } else {
         // Intentionally alphabetical
         ({ year, month } = ES.ToRecord(item, [['month'], ['year']]));
+        refIsoDay = 1;
       }
     } else {
       ({ year, month } = ES.ParseTemporalYearMonthString(ES.ToString(item)));
+      refIsoDay = 1;
     }
     ({ year, month } = ES.RegulateYearMonth(year, month, disambiguation));
-    const result = new this(year, month);
+    const result = new this(year, month, refIsoDay);
     if (!ES.IsTemporalYearMonth(result)) throw new TypeError('invalid result');
     return result;
   }

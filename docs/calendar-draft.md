@@ -74,12 +74,6 @@ class Temporal.Calendar {
 		constructor: function
 	) : Temporal.DateTime;
 
-	/** Constructs a Temporal.Time from a free-form option bag */
-	timeFromFields(
-		fields: object,
-		constructor: function
-	) : Temporal.Time;
-
 	/** Constructs a Temporal.YearMonth from a free-form option bag */
 	yearMonthFromFields(
 		fields: object,

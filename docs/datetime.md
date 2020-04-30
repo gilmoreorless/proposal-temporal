@@ -573,3 +573,17 @@ dt = Temporal.DateTime.from('1995-12-07T03:24:30.000003500');
 Object.assign({}, dt).day  // => undefined
 Object.assign({}, dt.getFields()).day  // => 7
 ```
+
+### datetime.**getISOCalendarFields()**(): { year: number, month: number, day: number, hour: number, minute: number, second: number, millisecond: number, microsecond: number, nanosecond: number }
+
+**Returns:** a plain object with properties expressing `datetime` in the ISO 8601 calendar.
+
+This method is mainly useful if you are implementing a custom calendar.
+Most code will not need to use it.
+Use `datetime.getFields()` instead.
+
+Usage example:
+```javascript
+dt = Temporal.Date.from('1995-12-07T03:24:30.000003500');
+date.getISOCalendarFields().day  // => 7
+```

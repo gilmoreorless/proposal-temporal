@@ -423,3 +423,17 @@ ym = Temporal.DateTime.from('2019-06');
 Object.assign({}, ym).year  // => undefined
 Object.assign({}, ym.getFields()).year  // => 2019
 ```
+
+### yearMonth.**getISOCalendarFields()**(): { year: number, month: number }
+
+**Returns:** a plain object with properties expressing `yearMonth` in the ISO 8601 calendar.
+
+This method is mainly useful if you are implementing a custom calendar.
+Most code will not need to use it.
+Use `yearMonth.getFields()` instead.
+
+Usage example:
+```javascript
+ym = Temporal.YearMonth.from('2019-06');
+ym.getISOCalendarFields().year  // => 2019
+```

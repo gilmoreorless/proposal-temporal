@@ -280,3 +280,17 @@ md = Temporal.MonthDay.from('08-24');
 Object.assign({}, md).day  // => undefined
 Object.assign({}, md.getFields()).day  // => 24
 ```
+
+### monthDay.**getISOFields()**(): { month: number, day: number }
+
+**Returns:** a plain object with properties expressing `monthDay` in the ISO 8601 calendar.
+
+This method is mainly useful if you are implementing a custom calendar.
+Most code will not need to use it.
+Use `monthDay.getFields()` instead.
+
+Usage example:
+```javascript
+md = Temporal.MonthDay.from('08-24');
+md.getISOFields().day  // => 24
+```

@@ -519,3 +519,17 @@ date = Temporal.Date.from('2006-08-24');
 Object.assign({}, date).day  // => undefined
 Object.assign({}, date.getFields()).day  // => 24
 ```
+
+### date.**getISOFields()**(): { year: number, month: number, day: number }
+
+**Returns:** a plain object with properties expressing `date` in the ISO 8601 calendar.
+
+This method is mainly useful if you are implementing a custom calendar.
+Most code will not need to use it.
+Use `date.getFields()` instead.
+
+Usage example:
+```javascript
+date = Temporal.Date.from('2006-08-24');
+date.getISOFields().day  // => 24
+```

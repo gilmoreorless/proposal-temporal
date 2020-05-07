@@ -1,40 +1,46 @@
 import { ES } from './ecmascript.mjs';
 import { GetIntrinsic, MakeIntrinsicClass } from './intrinsicclass.mjs';
-import { ISO_MONTH, ISO_DAY, REF_ISO_YEAR, CreateSlots, GetSlot, SetSlot } from './slots.mjs';
+import { ISO_MONTH, ISO_DAY, REF_ISO_YEAR, CALENDAR, CreateSlots, GetSlot, SetSlot } from './slots.mjs';
+
+const ObjectAssign = Object.assign;
 
 export class MonthDay {
-  constructor(isoMonth, isoDay, refIsoYear = 1972) {
+  constructor(isoMonth, isoDay, calendar = undefined, refIsoYear = 1972) {
     isoMonth = ES.ToInteger(isoMonth);
     isoDay = ES.ToInteger(isoDay);
+    calendar = ES.ToTemporalCalendar(calendar);
     refIsoYear = ES.ToInteger(refIsoYear);
     ES.RejectDate(refIsoYear, isoMonth, isoDay);
-
     CreateSlots(this);
     SetSlot(this, ISO_MONTH, isoMonth);
     SetSlot(this, ISO_DAY, isoDay);
     SetSlot(this, REF_ISO_YEAR, refIsoYear);
+    SetSlot(this, CALENDAR, calendar);
   }
 
   get month() {
     if (!ES.IsTemporalMonthDay(this)) throw new TypeError('invalid receiver');
-    return GetSlot(this, ISO_MONTH);
+    return GetSlot(this, CALENDAR).month(this);
   }
   get day() {
     if (!ES.IsTemporalMonthDay(this)) throw new TypeError('invalid receiver');
-    return GetSlot(this, ISO_DAY);
+    return GetSlot(this, CALENDAR).day(this);
+  }
+  get calendar() {
+    if (!ES.IsTemporalMonthDay(this)) throw new TypeError('invalid receiver');
+    return GetSlot(this, CALENDAR);
   }
 
   with(temporalMonthDayLike, options) {
     if (!ES.IsTemporalMonthDay(this)) throw new TypeError('invalid receiver');
-    const disambiguation = ES.ToTemporalDisambiguation(options);
     const props = ES.ToPartialRecord(temporalMonthDayLike, ['day', 'month']);
     if (!props) {
       throw new RangeError('invalid month-day-like');
     }
-    let { month = GetSlot(this, ISO_MONTH), day = GetSlot(this, ISO_DAY) } = props;
-    ({ month, day } = ES.RegulateMonthDay(month, day, disambiguation));
+    const fields = ES.ToRecord(this, [['day'], ['month']]);
+    ObjectAssign(fields, props);
     const Construct = ES.SpeciesConstructor(this, MonthDay);
-    const result = new Construct(month, day);
+    const result = GetSlot(this, CALENDAR).monthDayFromFields(fields, options, Construct);
     if (!ES.IsTemporalMonthDay(result)) throw new TypeError('invalid result');
     return result;
   }
@@ -62,19 +68,21 @@ export class MonthDay {
   withYear(item) {
     if (!ES.IsTemporalMonthDay(this)) throw new TypeError('invalid receiver');
     let year;
-    if (typeof item === 'object') {
+    if (typeof item === 'object' && item !== null) {
       ({ year } = ES.ToRecord(item, [['year']]));
     } else {
       year = ES.ToInteger(item);
     }
-    const month = GetSlot(this, ISO_MONTH);
-    const day = GetSlot(this, ISO_DAY);
+    const calendar = GetSlot(this, CALENDAR);
+    const day = calendar.day(this);
+    const month = calendar.month(this);
     const Date = GetIntrinsic('%Temporal.Date%');
-    return new Date(year, month, day);
+    return calendar.dateFromFields({ year, month, day }, { disambiguation: 'reject' }, Date);
   }
   getFields() {
     const fields = ES.ToRecord(this, [['day'], ['month']]);
     if (!fields) throw new TypeError('invalid receiver');
+    fields.calendar = GetSlot(this, CALENDAR);
     return fields;
   }
   getISOFields() {
@@ -86,23 +94,26 @@ export class MonthDay {
   }
   static from(item, options = undefined) {
     const disambiguation = ES.ToTemporalDisambiguation(options);
-    let month, day, refIsoYear;
+    let month, day, calendar, refIsoYear, result;
     if (typeof item === 'object' && item) {
       if (ES.IsTemporalMonthDay(item)) {
         month = GetSlot(item, ISO_MONTH);
         day = GetSlot(item, ISO_DAY);
+        calendar = GetSlot(item, CALENDAR);
         refIsoYear = GetSlot(item, REF_ISO_YEAR);
+        result = new this(month, day, calendar, refIsoYear);
       } else {
-        // Intentionally alphabetical
-        ({ month, day } = ES.ToRecord(item, [['day'], ['month']]));
-        refIsoYear = 1972;
+        const TemporalCalendar = GetIntrinsic('%Temporal.Calendar%');
+        calendar = item.calendar ? TemporalCalendar.from(item.calendar) : ES.GetDefaultCalendar();
+        result = calendar.monthDayFromFields(item, options, this);
       }
     } else {
       ({ month, day } = ES.ParseTemporalMonthDayString(ES.ToString(item)));
+      ({ month, day } = ES.RegulateMonthDay(month, day, disambiguation));
+      calendar = ES.GetDefaultCalendar();
       refIsoYear = 1972;
+      result = new this(month, day, calendar, refIsoYear);
     }
-    ({ month, day } = ES.RegulateMonthDay(month, day, disambiguation));
-    const result = new this(month, day, refIsoYear);
     if (!ES.IsTemporalMonthDay(result)) throw new TypeError('invalid result');
     return result;
   }

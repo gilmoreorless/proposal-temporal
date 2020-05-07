@@ -35,6 +35,9 @@ export class Calendar {
     void constructor;
     throw new Error('not implemented');
   }
+  fields(fields) {
+    return fields.slice();
+  }
   plus(date, duration, options, constructor) {
     void date;
     void duration;

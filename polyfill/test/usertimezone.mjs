@@ -89,6 +89,70 @@ describe('Userland time zone', () => {
       });
     });
   });
+  describe('Trivial protocol implementation', () => {
+    const obj = {
+      getOffsetNanosecondsFor(/* absolute */) {
+        return 0;
+      },
+      getPossibleAbsolutesFor(dateTime) {
+        const { year, month, day, hour, minute, second, millisecond, microsecond, nanosecond } = dateTime;
+        const dayNum = MakeDay(year, month, day);
+        const time = MakeTime(hour, minute, second, millisecond, microsecond, nanosecond);
+        const epochNs = MakeDate(dayNum, time);
+        return [new Temporal.Absolute(epochNs)];
+      },
+      toString() {
+        return 'Etc/Custom_UTC_Protocol';
+      }
+    };
+
+    const abs = Temporal.Absolute.fromEpochNanoseconds(0n);
+    const dt = new Temporal.DateTime(1976, 11, 18, 15, 23, 30, 123, 456, 789);
+
+    it('has offset string +00:00', () =>
+      equal(Temporal.TimeZone.prototype.getOffsetStringFor.call(obj, abs), '+00:00'));
+    it('converts to DateTime', () => {
+      equal(`${Temporal.TimeZone.prototype.getDateTimeFor.call(obj, abs)}`, '1970-01-01T00:00');
+      equal(`${abs.inTimeZone(obj)}`, '1970-01-01T00:00');
+    });
+    it('converts to Absolute', () => {
+      equal(`${Temporal.TimeZone.prototype.getAbsoluteFor.call(obj, dt)}`, '1976-11-18T15:23:30.123456789Z');
+      equal(`${dt.inTimeZone(obj)}`, '1976-11-18T15:23:30.123456789Z');
+    });
+    it('prints in absolute.toString', () =>
+      equal(abs.toString(obj), '1970-01-01T00:00+00:00[Etc/Custom_UTC_Protocol]'));
+    describe('Making available globally', () => {
+      const originalTemporalTimeZoneFrom = Temporal.TimeZone.from;
+      before(() => {
+        Temporal.TimeZone.from = function(item) {
+          let id;
+          if (item instanceof Temporal.TimeZone) {
+            id = item.name;
+          } else {
+            id = `${item}`;
+            // TODO: Use Temporal.parse here to extract the ID from an ISO string
+          }
+          if (id === 'Etc/Custom_UTC_Protocol') return obj;
+          return originalTemporalTimeZoneFrom.call(this, id);
+        };
+      });
+      it('works for TimeZone.from(id)', () => {
+        const tz = Temporal.TimeZone.from('Etc/Custom_UTC_Protocol');
+        assert(Object.is(tz, obj));
+      });
+      it.skip('works for TimeZone.from(ISO string)', () => {
+        const tz = Temporal.TimeZone.from('1970-01-01T00:00+00:00[Etc/Custom_UTC_Protocol]');
+        assert(Object.is(tz, obj));
+      });
+      it('works for Absolute.from', () => {
+        const abs = Temporal.Absolute.from('1970-01-01T00:00+00:00[Etc/Custom_UTC_Protocol]');
+        equal(`${abs}`, '1970-01-01T00:00Z');
+      });
+      after(() => {
+        Temporal.TimeZone.from = originalTemporalTimeZoneFrom;
+      });
+    });
+  });
 });
 
 const nsPerDay = 86400_000_000_000n;

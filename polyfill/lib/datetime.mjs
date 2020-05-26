@@ -302,9 +302,12 @@ export class DateTime {
 
   inTimeZone(temporalTimeZoneLike = 'UTC', options) {
     if (!ES.IsTemporalDateTime(this)) throw new TypeError('invalid receiver');
-    const timeZone = ES.ToTemporalTimeZone(temporalTimeZoneLike);
+    let timeZone = temporalTimeZoneLike;
+    if (typeof timeZone !== 'object') timeZone = ES.ToTemporalTimeZone(timeZone);
     const disambiguation = ES.ToTimeZoneTemporalDisambiguation(options);
-    return timeZone.getAbsoluteFor(this, { disambiguation });
+    if (typeof timeZone.getAbsoluteFor === 'function') return timeZone.getAbsoluteFor(this, { disambiguation });
+    const TemporalTimeZone = GetIntrinsic('%Temporal.TimeZone%');
+    return TemporalTimeZone.prototype.getAbsoluteFor.call(timeZone, this, { disambiguation });
   }
   getDate() {
     if (!ES.IsTemporalDateTime(this)) throw new TypeError('invalid receiver');
